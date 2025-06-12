@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="{{ language }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - {{ organization }}</title>
+    <style>
+        :root {
+            --primary-color: #003865;  /* Bleu financier profond */
+            --secondary-color: #0077B6;
+            --accent-color: #D4AF37;  /* Or financier */
+            --text-color: #333333;
+            --light-bg: #F5F7F9;
+            --warning-color: #FFC107;
+            --success-color: #28A745;
+            --critical-color: #DC3545;
+        }
+        
+        body {
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-bg);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            position: relative;
+            border-bottom: 5px solid var(--accent-color);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-title h1 {
+            font-size: 28px;
+            margin: 0;
+        }
+        
+        .header-title p {
+            margin: 5px 0 0 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .logo {
+            max-width: 150px;
+            max-height: 80px;
+        }
+        
+        .metadata {
+            background: white;
+            padding: 20px;
+            border-left: 4px solid var(--primary-color);
+            margin: 30px 0;
+        }
+        
+        .metadata-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        .metadata-label {
+            font-weight: bold;
+            width: 150px;
+            color: var(--primary-color);
+        }
+        
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 8px;
+            margin-top: 40px;
+        }
+        
+        h3 {
+            color: var(--secondary-color);
+        }
+        
+        .score-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--light-bg);
+            padding: 30px;
+            border-radius: 8px;
+            margin: 30px 0;
+            border: 1px solid #ddd;
+        }
+        
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 30px;
+            color: white;
+        }
+        
+        .score-value {
+            font-size: 54px;
+            font-weight: bold;
+            line-height: 1;
+        }
+        
+        .score-details {
+            flex: 1;
+        }
+        
+        .score-label {
+            font-size: 18px;
+            color: var(--text-color);
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .compliance-status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .status-compliant {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .status-partial {
+            background-color: var(--warning-color);
+            color: var(--text-color);
+        }
+        
+        .status-non-compliant {
+            background-color: var(--critical-color);
+            color: white;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: normal;
+        }
+        
+        tr:hover {
+            background-color: #f5f9fc;
+        }
+        
+        .issue {
+            background-color: white;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-left: 5px solid var(--critical-color);
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .issue-high {
+            border-left-color: var(--critical-color);
+        }
+        
+        .issue-medium {
+            border-left-color: var(--warning-color);
+        }
+        
+        .issue-low {
+            border-left-color: var(--secondary-color);
+        }
+        
+        .issue h3 {
+            margin-top: 0;
+            color: var(--text-color);
+        }
+        
+        .issue-severity {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        
+        .severity-high {
+            background-color: var(--critical-color);
+            color: white;
+        }
+        
+        .severity-medium {
+            background-color: var(--warning-color);
+            color: var(--text-color);
+        }
+        
+        .severity-low {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .recommendation {
+            background-color: white;
+            margin-bottom: 15px;
+            padding: 15px 20px;
+            border-left: 5px solid var(--success-color);
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .regulation-badges {
+            margin: 20px 0;
+        }
+        
+        .financial-badge {
+            display: inline-block;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .mifid-badge {
+            background-color: #E8F5E9;
+            color: #1B5E20;
+            border: 1px solid #1B5E20;
+        }
+        
+        .gdpr-badge {
+            background-color: #E3F2FD;
+            color: #0D47A1;
+            border: 1px solid #0D47A1;
+        }
+        
+        .aiact-badge {
+            background-color: #F3E5F5;
+            color: #4A148C;
+            border: 1px solid #4A148C;
+        }
+        
+        .basel-badge {
+            background-color: #FFF8E1;
+            color: #F57F17;
+            border: 1px solid #F57F17;
+        }
+        
+        .financial-info {
+            background-color: #EFF8FB;
+            border-left: 4px solid #0077B6;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .financial-warning {
+            background-color: #FFF3E0;
+            border-left: 4px solid #E65100;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        footer {
+            margin-top: 50px;
+            padding: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            font-size: 14px;
+            border-top: 3px solid var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="header-title">
+                    <h1>{{ title }}</h1>
+                    <p>{{ timestamp }}</p>
+                </div>
+                {% if logo_path %}
+                <img src="{{ logo_path }}" alt="Logo" class="logo">
+                {% endif %}
+            </div>
+        </header>
+        
+        <section class="metadata">
+            <div class="metadata-row">
+                <div class="metadata-label">{{ organization_label }}:</div>
+                <div>{{ organization }}</div>
+            </div>
+            <div class="metadata-row">
+                <div class="metadata-label">{{ responsible_label }}:</div>
+                <div>{{ responsible }}</div>
+            </div>
+            <div class="metadata-row">
+                <div class="metadata-label">{{ date_label }}:</div>
+                <div>{{ formatted_date }}</div>
+            </div>
+        </section>
+        
+        <div class="regulation-badges">
+            <span class="financial-badge mifid-badge">MiFID II</span>
+            <span class="financial-badge basel-badge">Basel III</span>
+            <span class="financial-badge gdpr-badge">RGPD</span>
+            <span class="financial-badge aiact-badge">AI Act</span>
+        </div>
+        
+        <div class="financial-info">
+            <p>Ce rapport évalue la conformité des systèmes d'IA dans le secteur financier selon les réglementations MiFID II, Bâle III, RGPD et AI Act. La transparence et l'explicabilité des modèles sont essentielles pour les applications financières, en particulier pour les systèmes de notation de crédit, de détection de fraude et de trading algorithmique.</p>
+        </div>
+        
+        {% if summary %}
+        <section>
+            <h2>{{ summary_label }}</h2>
+            <p>{{ summary }}</p>
+        </section>
+        {% endif %}
+        
+        {% if compliance_score %}
+        <section>
+            <h2>{{ compliance_score_label }}</h2>
+            <div class="score-container">
+                <div class="score-circle">
+                    <div class="score-value">{{ score }}</div>
+                </div>
+                <div class="score-details">
+                    <div class="score-label">{{ compliance_score_label }}</div>
+                    <p>{{ compliance_description }}</p>
+                    <div class="compliance-status {% if score >= 90 %}status-compliant{% elif score >= 70 %}status-partial{% else %}status-non-compliant{% endif %}">
+                        {{ compliance_status }}
+                    </div>
+                </div>
+            </div>
+            
+            {% if score_details %}
+            <table>
+                <tr>
+                    <th>{{ regulation_label }}</th>
+                    <th>{{ score_label }}</th>
+                    <th>{{ status_label }}</th>
+                </tr>
+                {% for regulation, score in score_details.items() %}
+                <tr>
+                    <td>{{ regulation }}</td>
+                    <td>{{ score }}</td>
+                    <td>
+                        {% if score >= 90 %}
+                        <span class="compliance-status status-compliant">{{ compliant_label }}</span>
+                        {% elif score >= 70 %}
+                        <span class="compliance-status status-partial">{{ partially_compliant_label }}</span>
+                        {% else %}
+                        <span class="compliance-status status-non-compliant">{{ non_compliant_label }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% endif %}
+        </section>
+        {% endif %}
+        
+        <div class="financial-warning">
+            <p><strong>Alerte réglementaire :</strong> Les institutions financières doivent démontrer une transparence totale sur leurs modèles d'IA, notamment ceux utilisés pour l'évaluation des risques, les décisions de crédit et le trading automatisé. L'incapacité à expliquer ces modèles expose l'organisation à des risques importants de sanctions réglementaires.</p>
+        </div>
+        
+        {% if audit_trail %}
+        <section>
+            <h2>{{ audit_trail_label }}</h2>
+            <table>
+                <tr>
+                    {% for header in audit_trail_headers %}
+                    <th>{{ header }}</th>
+                    {% endfor %}
+                </tr>
+                {% for entry in audit_trail %}
+                <tr>
+                    {% for field, value in entry.items() %}
+                    <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </table>
+        </section>
+        {% endif %}
+        
+        {% if decision_log %}
+        <section>
+            <h2>{{ decision_log_label }}</h2>
+            <table>
+                <tr>
+                    {% for header in decision_log_headers %}
+                    <th>{{ header }}</th>
+                    {% endfor %}
+                </tr>
+                {% for entry in decision_log %}
+                <tr>
+                    {% for field, value in entry.items() %}
+                    <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </table>
+        </section>
+        {% endif %}
+        
+        {% if issues %}
+        <section>
+            <h2>{{ issues_label }}</h2>
+            
+            {% for issue in issues %}
+            <div class="issue issue-{% if issue.severity == 'high' %}high{% elif issue.severity == 'medium' %}medium{% else %}low{% endif %}">
+                <h3>{{ issue.title }}</h3>
+                <span class="issue-severity severity-{% if issue.severity == 'high' %}high{% elif issue.severity == 'medium' %}medium{% else %}low{% endif %}">{{ issue.severity }}</span>
+                <p><strong>{{ description_label }}:</strong> {{ issue.description }}</p>
+                {% if issue.regulation %}
+                <p><strong>{{ regulation_label }}:</strong> {{ issue.regulation }}</p>
+                {% endif %}
+                {% if issue.remediation %}
+                <p><strong>{{ remediation_label }}:</strong> {{ issue.remediation }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+        
+        {% if recommendations %}
+        <section>
+            <h2>{{ recommendations_label }}</h2>
+            {% for recommendation in recommendations %}
+            <div class="recommendation">
+                <p>{{ recommendation }}</p>
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+        
+        {% if include_verification_qr and verification_url %}
+        <section class="verification-section">
+            <h2>{{ verification_label }}</h2>
+            <img src="{{ qr_code }}" alt="QR Code for verification" class="qr-code">
+            <p>{{ verification_instruction }}</p>
+        </section>
+        {% endif %}
+        
+        {% if include_signatures %}
+        <section class="signature-section">
+            <h2>{{ signature_label }}</h2>
+            <p><strong>{{ signature_value_label }}:</strong> {{ signature_value }}</p>
+            <p><strong>{{ signature_timestamp_label }}:</strong> {{ signature_timestamp }}</p>
+        </section>
+        {% endif %}
+        
+        <footer>
+            <p>{{ footer_text }}</p>
+            <p>{{ generator_info }}</p>
+        </footer>
+    </div>
+</body>
+</html>
