@@ -88,7 +88,7 @@ Si vous utilisez XPLIA dans votre recherche, veuillez nous citer :
 @software{xplia2025,
   author = {Severino, Nicolas et al.},
   title = {XPLIA: A Comprehensive AI Model Explainability Framework},
-  url = {https://github.com/nseverino/xplia},
+  url = {https://github.com/nicolasseverino/xplia},
   version = {0.1.0},
   year = {2025},
 }

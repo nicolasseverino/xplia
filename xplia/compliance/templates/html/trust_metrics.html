@@ -1,0 +1,307 @@
+<!-- 
+  Template de composant pour l'affichage des métriques de confiance
+  Ce template est conçu pour être inclus dans les rapports HTML générés par XPLIA
+-->
+
+<div class="xplia-trust-metrics">
+  <h3 class="trust-metrics-title">Évaluation de Confiance</h3>
+  
+  <!-- Score global et niveau de confiance -->
+  <div class="trust-score-container">
+    <div class="trust-score-gauge">
+      <div class="trust-score-value" style="--trust-score: {{ trust_score_percentage }}%">
+        <span class="trust-score-number">{{ trust_score }}</span>
+      </div>
+      <div class="trust-level {{ trust_level_class }}">{{ trust_level_label }}</div>
+    </div>
+    <div class="trust-summary">
+      <p>{{ trust_summary }}</p>
+    </div>
+  </div>
+  
+  <!-- Détails des métriques de confiance -->
+  <div class="trust-details">
+    <h4>Métriques détaillées</h4>
+    
+    <div class="trust-metrics-grid">
+      <!-- Incertitude -->
+      <div class="metric-card uncertainty">
+        <div class="metric-header">
+          <h5>Certitude</h5>
+          <div class="metric-score {{ uncertainty_class }}">{{ uncertainty_score }}</div>
+        </div>
+        <div class="metric-details">
+          <div class="metric-bar">
+            <div class="metric-bar-fill" style="width: {{ uncertainty_percentage }}%"></div>
+          </div>
+          <div class="metric-types">
+            {% if uncertainty_types %}
+            <ul>
+              {% for type, value in uncertainty_types %}
+              <li><span class="type-name">{{ type }}</span>: <span class="type-value">{{ value }}</span></li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
+      <!-- Fairwashing -->
+      <div class="metric-card fairwashing">
+        <div class="metric-header">
+          <h5>Anti-Fairwashing</h5>
+          <div class="metric-score {{ fairwashing_class }}">{{ fairwashing_score }}</div>
+        </div>
+        <div class="metric-details">
+          <div class="metric-bar">
+            <div class="metric-bar-fill" style="width: {{ fairwashing_percentage }}%"></div>
+          </div>
+          <div class="metric-types">
+            {% if detected_fairwashing_types %}
+            <div class="detected-types">
+              <h6>Types détectés:</h6>
+              <ul>
+                {% for type in detected_fairwashing_types %}
+                <li>{{ type }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
+      <!-- Cohérence -->
+      <div class="metric-card consistency">
+        <div class="metric-header">
+          <h5>Cohérence</h5>
+          <div class="metric-score {{ consistency_class }}">{{ consistency_score }}</div>
+        </div>
+        <div class="metric-details">
+          <div class="metric-bar">
+            <div class="metric-bar-fill" style="width: {{ consistency_percentage }}%"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Robustesse -->
+      <div class="metric-card robustness">
+        <div class="metric-header">
+          <h5>Robustesse</h5>
+          <div class="metric-score {{ robustness_class }}">{{ robustness_score }}</div>
+        </div>
+        <div class="metric-details">
+          <div class="metric-bar">
+            <div class="metric-bar-fill" style="width: {{ robustness_percentage }}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Recommandations -->
+  {% if trust_recommendations %}
+  <div class="trust-recommendations">
+    <h4>Recommandations</h4>
+    <ul>
+      {% for recommendation in trust_recommendations %}
+      <li>{{ recommendation }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Styles pour les métriques de confiance -->
+<style>
+  .xplia-trust-metrics {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .trust-metrics-title {
+    color: #333;
+    margin-top: 0;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 10px;
+  }
+  
+  .trust-score-container {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+  }
+  
+  .trust-score-gauge {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #eee;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-right: 20px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+  }
+  
+  .trust-score-value {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: conic-gradient(
+      #4CAF50 0% var(--trust-score),
+      #eee var(--trust-score) 100%
+    );
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .trust-score-value::before {
+    content: '';
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: white;
+  }
+  
+  .trust-score-number {
+    position: relative;
+    z-index: 1;
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .trust-level {
+    margin-top: 10px;
+    font-weight: bold;
+    font-size: 14px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: white;
+  }
+  
+  .trust-level.very-low { background-color: #d32f2f; }
+  .trust-level.low { background-color: #f57c00; }
+  .trust-level.moderate { background-color: #fbc02d; color: #333; }
+  .trust-level.high { background-color: #7cb342; }
+  .trust-level.very-high { background-color: #388e3c; }
+  
+  .trust-summary {
+    flex: 1;
+    padding: 10px;
+    background: white;
+    border-radius: 6px;
+    border-left: 4px solid #2196F3;
+  }
+  
+  .trust-details {
+    margin-top: 20px;
+  }
+  
+  .trust-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+  }
+  
+  .metric-card {
+    background: white;
+    border-radius: 6px;
+    padding: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .metric-header h5 {
+    margin: 0;
+    color: #555;
+  }
+  
+  .metric-score {
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .metric-score.excellent { background-color: #4CAF50; color: white; }
+  .metric-score.good { background-color: #8BC34A; color: white; }
+  .metric-score.moderate { background-color: #FFC107; color: #333; }
+  .metric-score.poor { background-color: #FF9800; color: white; }
+  .metric-score.critical { background-color: #F44336; color: white; }
+  
+  .metric-bar {
+    height: 8px;
+    background-color: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  
+  .metric-bar-fill {
+    height: 100%;
+    background-color: #2196F3;
+    border-radius: 4px;
+  }
+  
+  .metric-types ul {
+    padding-left: 20px;
+    margin: 5px 0;
+    font-size: 13px;
+    color: #666;
+  }
+  
+  .type-name {
+    font-weight: bold;
+  }
+  
+  .detected-types {
+    margin-top: 10px;
+  }
+  
+  .detected-types h6 {
+    margin: 0 0 5px 0;
+    font-size: 13px;
+    color: #555;
+  }
+  
+  .trust-recommendations {
+    margin-top: 20px;
+    background: white;
+    border-radius: 6px;
+    padding: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .trust-recommendations h4 {
+    color: #333;
+    margin-top: 0;
+  }
+  
+  .trust-recommendations ul {
+    padding-left: 20px;
+    margin: 10px 0 0;
+  }
+  
+  .trust-recommendations li {
+    margin-bottom: 5px;
+    color: #555;
+  }
+</style>
