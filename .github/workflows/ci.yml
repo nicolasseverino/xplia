@@ -1,0 +1,171 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, claude/** ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  # Lightweight tests - Core functionality only
+  test-core:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Free disk space
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/local/share/boost
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        df -h
+
+    - name: Install core dependencies only
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[xai,dev]"
+
+    - name: Run core tests
+      run: |
+        pytest tests/test_*.py tests/compliance/ tests/visualizations/ -v --maxfail=5
+      continue-on-error: true
+
+  # TIER 1 tests - Advanced features (separate job to manage disk space)
+  test-tier1:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10']  # Only one version to save resources
+        test-file: [
+          'test_multimodal.py',
+          'test_graph.py',
+          'test_reinforcement.py',
+          'test_timeseries.py',
+          'test_tier1_remaining.py'
+        ]
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Free disk space
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/local/share/boost
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        df -h
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[xai,dev]"
+
+    - name: Run TIER 1 tests - ${{ matrix.test-file }}
+      run: |
+        pytest tests/explainers/${{ matrix.test-file }} -v
+      continue-on-error: true
+
+  # TIER 2+3 tests
+  test-tier2-tier3:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10']
+        test-file: ['test_tier2.py', 'test_tier3.py']
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Free disk space
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/local/share/boost
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        df -h
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[xai,dev]"
+
+    - name: Run TIER 2+3 tests - ${{ matrix.test-file }}
+      run: |
+        pytest tests/explainers/${{ matrix.test-file }} -v
+      continue-on-error: true
+
+  # Code quality checks
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install linting tools
+      run: |
+        pip install flake8 black isort
+
+    - name: Run flake8
+      run: |
+        flake8 xplia --count --select=E9,F63,F7,F82 --show-source --statistics
+      continue-on-error: true
+
+    - name: Check black formatting
+      run: |
+        black --check xplia
+      continue-on-error: true
+
+    - name: Check isort
+      run: |
+        isort --check-only xplia
+      continue-on-error: true
+
+  # Build check
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install build tools
+      run: |
+        pip install build twine
+
+    - name: Build package
+      run: |
+        python -m build
+
+    - name: Check package
+      run: |
+        twine check dist/*

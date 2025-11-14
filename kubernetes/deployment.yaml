@@ -1,0 +1,115 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xplia-api
+  labels:
+    app: xplia
+    component: api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: xplia
+      component: api
+  template:
+    metadata:
+      labels:
+        app: xplia
+        component: api
+    spec:
+      containers:
+      - name: xplia
+        image: nicolasseverino/xplia:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: XPLIA_VERBOSITY
+          value: "INFO"
+        - name: XPLIA_N_JOBS
+          value: "-1"
+        - name: XPLIA_CACHE_ENABLED
+          value: "true"
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: models
+          mountPath: /models
+        - name: cache
+          mountPath: /root/.xplia/cache
+      volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: xplia-models-pvc
+      - name: cache
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: xplia-api-service
+  labels:
+    app: xplia
+spec:
+  type: LoadBalancer
+  selector:
+    app: xplia
+    component: api
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: xplia-models-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: xplia-api-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: xplia-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
