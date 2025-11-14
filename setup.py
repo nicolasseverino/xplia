@@ -20,10 +20,10 @@ setup(
     },
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Development Status :: 5 - Production/Stable",
@@ -38,7 +38,7 @@ setup(
     ],
     package_dir={"": "."},
     packages=find_packages(where=".", exclude=["tests", "tests.*", "examples", "examples.*"]),
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     install_requires=[
         # Core dependencies (minimal for basic functionality)
         "numpy>=1.20.0,<2.0.0",
@@ -52,10 +52,13 @@ setup(
         "pillow>=8.0.0,<11.0.0",
     ],
     extras_require={
-        # XAI methods
+        # XAI methods (lightweight)
         "xai": [
             "shap>=0.40.0,<1.0.0",
             "lime>=0.2.0,<1.0.0",
+        ],
+        # Advanced XAI (heavier dependencies)
+        "advanced": [
             "alibi>=0.7.0,<1.0.0",
             "interpret>=0.2.7,<1.0.0",
         ],
