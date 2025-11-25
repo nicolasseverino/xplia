@@ -1056,3 +1056,179 @@ def scan_modules_for_registrations(package_name="xplia", auto_register=False):
 # Déclencher l'enregistrement automatique lors de l'importation
 # (commenté pour l'instant car les classes de base ne sont pas encore toutes définies)
 # scan_modules_for_registrations()
+
+
+class Registry:
+    """
+    Classe principale de registre pour XPLIA.
+    
+    Fournit une interface unifiée pour accéder à tous les types de composants
+    enregistrés dans le système.
+    """
+    
+    def __init__(self):
+        """Initialise le registre global."""
+        self._registries = _REGISTRY
+    
+    def get_explainers(self, **filters) -> List[Type]:
+        """
+        Récupère les explainers enregistrés.
+        
+        Args:
+            **filters: Critères de filtrage (tags, capability, etc.)
+            
+        Returns:
+            List[Type]: Liste des classes d'explainers
+        """
+        return get_registered_explainers(**filters)
+    
+    def get_visualizers(self, **filters) -> List[Type]:
+        """
+        Récupère les visualiseurs enregistrés.
+        
+        Args:
+            **filters: Critères de filtrage
+            
+        Returns:
+            List[Type]: Liste des classes de visualiseurs
+        """
+        return get_registered_visualizers(**filters)
+    
+    def get_model_adapters(self, **filters) -> List[Type]:
+        """
+        Récupère les adaptateurs de modèles enregistrés.
+        
+        Args:
+            **filters: Critères de filtrage
+            
+        Returns:
+            List[Type]: Liste des classes d'adaptateurs
+        """
+        return get_registered_model_adapters(**filters)
+    
+    def get_compliance_checkers(self, **filters) -> List[Type]:
+        """
+        Récupère les vérificateurs de conformité enregistrés.
+        
+        Args:
+            **filters: Critères de filtrage
+            
+        Returns:
+            List[Type]: Liste des classes de vérificateurs
+        """
+        return get_registered_compliance_checkers(**filters)
+    
+    def register(self, component_type: ComponentType, component_class: Type, 
+                 metadata: Optional[ComponentMetadata] = None) -> None:
+        """
+        Enregistre un composant dans le registre approprié.
+        
+        Args:
+            component_type: Type de composant
+            component_class: Classe du composant
+            metadata: Métadonnées optionnelles
+        """
+        if metadata is None:
+            metadata = ComponentMetadata(
+                name=component_class.__name__,
+                component_type=component_type,
+                version=Version("1.0.0"),
+                description=component_class.__doc__ or ""
+            )
+        
+        self._registries[component_type].register(component_class, metadata)
+    
+    def unregister(self, component_type: ComponentType, name: str) -> bool:
+        """
+        Désenregistre un composant.
+        
+        Args:
+            component_type: Type de composant
+            name: Nom du composant
+            
+        Returns:
+            bool: True si le composant a été désenregistré
+        """
+        return self._registries[component_type].unregister(name)
+    
+    def get_component(self, component_type: ComponentType, name: str) -> Optional[Tuple[Type, ComponentMetadata]]:
+        """
+        Récupère un composant spécifique.
+        
+        Args:
+            component_type: Type de composant
+            name: Nom du composant
+            
+        Returns:
+            Optional[Tuple[Type, ComponentMetadata]]: Composant et ses métadonnées
+        """
+        return self._registries[component_type].get(name)
+    
+    def list_all_components(self) -> Dict[ComponentType, List[str]]:
+        """
+        Liste tous les composants enregistrés par type.
+        
+        Returns:
+            Dict[ComponentType, List[str]]: Dictionnaire des noms de composants par type
+        """
+        result = {}
+        for ctype, registry in self._registries.items():
+            result[ctype] = [metadata.name for _, metadata in registry.get_all()]
+        return result
+    
+    def validate_dependencies(self) -> Dict[str, List[Dict[str, Any]]]:
+        """
+        Valide toutes les dépendances du registre.
+        
+        Returns:
+            Dict[str, List[Dict[str, Any]]]: Erreurs de dépendances par composant
+        """
+        return validate_component_dependencies()
+    
+    def detect_cycles(self) -> List[List[str]]:
+        """
+        Détecte les cycles de dépendances.
+        
+        Returns:
+            List[List[str]]: Liste des cycles détectés
+        """
+        return detect_dependency_cycles()
+    
+    def export_metadata(self, component_type: Optional[ComponentType] = None) -> Dict[str, Any]:
+        """
+        Exporte les métadonnées de tous les composants.
+        
+        Args:
+            component_type: Type de composant spécifique (optionnel)
+            
+        Returns:
+            Dict[str, Any]: Métadonnées exportées
+        """
+        result = {}
+        
+        types_to_export = [component_type] if component_type else list(ComponentType)
+        
+        for ctype in types_to_export:
+            registry = self._registries[ctype]
+            result[ctype.value] = []
+            for _, metadata in registry.get_all():
+                result[ctype.value].append(metadata.to_dict())
+        
+        return result
+    
+    def clear(self, component_type: Optional[ComponentType] = None) -> None:
+        """
+        Vide le registre.
+        
+        Args:
+            component_type: Type de composant à vider (optionnel, vide tout si None)
+        """
+        if component_type:
+            self._registries[component_type].components.clear()
+        else:
+            for registry in self._registries.values():
+                registry.components.clear()
+
+
+# Instance globale du registre
+_global_registry = Registry()

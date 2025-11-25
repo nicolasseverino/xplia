@@ -33,12 +33,24 @@ from .core.config import set_config, get_config, ConfigManager
 
 # Exposition des sous-modules pour un accès facile
 from . import explainers
-from . import visualizers
-from . import models
+try:
+    from . import visualizers
+except ImportError:
+    visualizers = None
+try:
+    from . import models
+except ImportError:
+    models = None
 from . import compliance
-from . import data_processing
+try:
+    from . import data_processing
+except ImportError:
+    data_processing = None
 from . import utils
-from . import api
+try:
+    from . import api
+except ImportError:
+    api = None
 
 __all__ = [
     "ExplainerBase",

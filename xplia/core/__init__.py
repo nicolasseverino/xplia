@@ -11,6 +11,8 @@ from .base import (
     ExplanationResult,
     FeatureImportance,
     ModelMetadata,
+    ExplanationQuality,
+    ExplanationFormat,
     ExplainabilityMethod,
     AudienceLevel,
     ModelType,
@@ -21,7 +23,7 @@ from .base import (
 # Importer ModelAdapterBase depuis le bon module
 from .model_adapters.base import ModelAdapterBase
 
-from .factory import ModelFactory, ExplainerFactory, VisualizerFactory
+from .factory import ModelFactory, ExplainerFactory, VisualizerFactory, load_model, create_explainer
 from .registry import Registry
 from .config import ConfigManager
 
@@ -33,10 +35,15 @@ config_manager = ConfigManager()
 
 # Niveaux d'audience supportés
 AUDIENCE_LEVELS = {
+    'novice': AudienceLevel.NOVICE,
+    'basic': AudienceLevel.BASIC,
+    'intermediate': AudienceLevel.INTERMEDIATE,
+    'advanced': AudienceLevel.ADVANCED,
+    'expert': AudienceLevel.EXPERT,
+    # Aliases
     'public': AudienceLevel.PUBLIC,
     'business': AudienceLevel.BUSINESS,
-    'technical': AudienceLevel.TECHNICAL,
-    'expert': AudienceLevel.EXPERT
+    'technical': AudienceLevel.TECHNICAL
 }
 
 # Méthodes d'explicabilité supportées
@@ -55,6 +62,8 @@ __all__ = [
     'ExplanationResult',
     'FeatureImportance',
     'ModelMetadata',
+    'ExplanationQuality',
+    'ExplanationFormat',
     'ModelAdapterBase',
     
     # Enums
@@ -70,6 +79,10 @@ __all__ = [
     'ModelFactory',
     'ExplainerFactory',
     'VisualizerFactory',
+    
+    # Factory functions
+    'load_model',
+    'create_explainer',
     
     # Utilitaires
     'Registry',

@@ -1963,14 +1963,17 @@ class ShapExplainer(ExplainerBase):
                 # Français
                 if audience_level == 'TECHNICAL':
                     # Narrative technique détaillée
+                    gini_value = self._gini_index(global_importance)
+                    concentration_type = "forte concentration" if gini_value > 0.6 else "répartition équilibrée"
+                    model_type_str = 'multi-classes' if classes > 1 else 'binaire/régression'
                     summary = (
                         f"L'analyse SHAP a identifié {len(feature_names)} caractéristiques dont les "
                         f"principales sont {', '.join(top_features[:3])} représentant "
-                        f"{top_importance_norm[:3].sum():.1f}% de l'impact explicatif. "
-                        f"Le modèle {'multi-classes' if classes > 1 else 'binaire/régression'} "
+                        f"{top_importance_norm[:3].sum():.1f}% "
+                        f"Le modèle {model_type_str} "
                         f"présente une distribution d'attributions avec un indice de Gini "
-                        f"de {self._gini_index(global_importance):.3f}, indiquant une "
-                        f"{"forte concentration" if self._gini_index(global_importance) > 0.6 else "répartition équilibrée"} "
+                        f"de {gini_value:.3f}, indiquant une "
+                        f"{concentration_type} "
                         f"de l'influence prédictive."
                     )
                 elif audience_level == 'BUSINESS':
@@ -1993,22 +1996,27 @@ class ShapExplainer(ExplainerBase):
             else:
                 # Anglais
                 if audience_level == 'TECHNICAL':
+                    gini_value = self._gini_index(global_importance)
+                    model_type_str = "multi-class" if classes > 1 else "binary/regression"
+                    concentration_str = "high concentration" if gini_value > 0.6 else "balanced distribution"
                     summary = (
                         f"SHAP analysis identified {len(feature_names)} features with "
                         f"the top drivers being {', '.join(top_features[:3])} representing "
                         f"{top_importance_norm[:3].sum():.1f}% of explanatory impact. "
-                        f"The {"multi-class" if classes > 1 else "binary/regression"} model "
+                        f"The {model_type_str} model "
                         f"displays an attribution distribution with Gini index "
-                        f"of {self._gini_index(global_importance):.3f}, indicating "
-                        f"{"high concentration" if self._gini_index(global_importance) > 0.6 else "balanced distribution"} "
+                        f"of {gini_value:.3f}, indicating "
+                        f"{concentration_str} "
                         f"of predictive influence."
                     )
                 elif audience_level == 'BUSINESS':
+                    gini_value = self._gini_index(global_importance)
+                    model_strategy = "relies heavily on a small number of key factors" if gini_value > 0.6 else "leverages a diverse set of factors"
                     summary = (
                         f"The main factors influencing predictions are "
                         f"{', '.join(top_features[:3])} with respective impacts of "
                         f"{', '.join([f'{v:.1f}%' for v in top_importance_norm[:3]])}. "
-                        f"The model {"relies heavily on a small number of key factors" if self._gini_index(global_importance) > 0.6 else "leverages a diverse set of factors"} "
+                        f"The model {model_strategy} "
                         f"to establish its predictions."
                     )
                 else:  # 'PUBLIC'
@@ -2201,7 +2209,7 @@ class ShapExplainer(ExplainerBase):
         is_classifier = False
         if hasattr(self._model, 'predict_proba'):
             is_classifier = True
-{{ ... }}
+        elif hasattr(self._model, '_estimator_type') and self._model._estimator_type == 'classifier':
             is_classifier = True
         elif model_type in ['tensorflow', 'pytorch']:
             # Pour les modèles deep learning, vérifier la forme de sortie

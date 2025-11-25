@@ -5,9 +5,9 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="xplia",
-    version="1.0.0",  # Production ready!
+    version="1.0.1",  # Bug fixes and improvements
     author="Nicolas Severino",
-    author_email="contact@xplia.com",
+    author_email="nicolas.severino@example.com",
     description="XPLIA: The Ultimate State-of-the-Art AI Explainability Library",
     long_description=long_description,
     long_description_content_type="text/markdown",

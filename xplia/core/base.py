@@ -38,9 +38,15 @@ class ExplainabilityMethod(str, Enum):
 
 class AudienceLevel(str, Enum):
     """Niveaux d'audience pour l'explicabilité."""
-    TECHNICAL = "technical"    # Pour data scientists et ingénieurs
-    BUSINESS = "business"      # Pour décideurs et managers
-    PUBLIC = "public"          # Pour le grand public et non-experts
+    NOVICE = "novice"          # Grand public, aucune connaissance technique
+    BASIC = "basic"            # Décideurs, managers, stakeholders business
+    INTERMEDIATE = "intermediate"  # Analystes, data analysts
+    ADVANCED = "advanced"      # Data scientists, ML engineers
+    EXPERT = "expert"          # ML researchers, experts académiques
+    # Aliases pour compatibilité
+    PUBLIC = "novice"
+    BUSINESS = "basic"
+    TECHNICAL = "advanced"
 
 
 class ModelType(str, Enum):
@@ -153,14 +159,49 @@ class AuditableMixin:
 class FeatureImportance:
     """Classe pour stocker les importances des caractéristiques."""
     feature_name: str
-    importance: float
+    importance_value: float
+    importance_rank: int = 0
+    direction: str = "positive"
     confidence_interval: Optional[Tuple[float, float]] = None
     std_dev: Optional[float] = None
     p_value: Optional[float] = None
     
+    # Alias pour compatibilité
+    @property
+    def importance(self):
+        return self.importance_value
+    
     def to_dict(self):
         """Convertit en dictionnaire."""
         return asdict(self)
+
+
+@dataclass
+class ExplanationQuality:
+    """Métriques de qualité d'une explication."""
+    fidelity: Optional[float] = None  # Fidélité au modèle (0-1)
+    stability: Optional[float] = None  # Stabilité des explications (0-1)
+    sparsity: Optional[float] = None  # Sparsité (proportion de features importantes)
+    consistency: Optional[float] = None  # Cohérence entre instances similaires (0-1)
+    
+    def to_dict(self):
+        """Convertit en dictionnaire."""
+        return asdict(self)
+    
+    def overall_score(self) -> float:
+        """Calcule un score global de qualité."""
+        scores = [s for s in [self.fidelity, self.stability, self.sparsity, self.consistency] if s is not None]
+        return sum(scores) / len(scores) if scores else 0.0
+
+
+class ExplanationFormat(str, Enum):
+    """Formats d'export des explications."""
+    JSON = "json"
+    HTML = "html"
+    PDF = "pdf"
+    TEXT = "text"
+    MARKDOWN = "markdown"
+    INTERACTIVE = "interactive"
 
 
 @dataclass

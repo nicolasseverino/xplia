@@ -558,130 +558,130 @@ class LimeExplainer(ExplainerBase):
         return feature_importances
         
     def explain_instance(self, instance, **kwargs) -> ExplanationResult:
-    """
-    Explique une instance spécifique avec LIME avec fonctionnalités avancées.
-    
-    Cette implémentation avancée inclut:
-    - Support GPU optimisé pour les calculs complexes
-    - Système de cache intelligent pour les explications récurrentes
-    - Métriques de qualité et de fidélité des explications
-    - Génération de narratives explicatives multi-audience et multilingues
-    - Validation de conformité réglementaire intégrée
-    
-    Args:
-        instance: Instance à expliquer (array, liste, dict ou pandas.Series)
-        **kwargs: Paramètres additionnels
-            - num_features: Nombre de caractéristiques à inclure dans l'explication
-            - num_samples: Nombre d'échantillons à générer pour l'approximation locale
-            - audience_level: Niveau d'audience (TECHNICAL, BUSINESS, PUBLIC)
-            - label: Indice de la classe à expliquer (pour les classifieurs multi-classes)
-            - use_cache: Activer/désactiver l'utilisation du cache (défaut: True)
-            - use_gpu: Utiliser GPU si disponible (défaut: configuration globale)
-            - compute_metrics: Calculer les métriques de qualité d'explication (défaut: True)
-            - include_prediction: Inclure la prédiction du modèle dans le résultat (défaut: True)
-            - generate_narrative: Générer des narratives textuelles explicatives (défaut: True)
-            - narrative_language: Langue des narratives ('fr', 'en') (défaut: 'fr')
-            - check_compliance: Vérifier la conformité réglementaire de l'explication (défaut: True)
-            - compliance_regulations: Liste des réglementations à vérifier (défaut: ['gdpr', 'ai_act'])
+        """
+        Explique une instance spécifique avec LIME avec fonctionnalités avancées.
+        
+        Cette implémentation avancée inclut:
+        - Support GPU optimisé pour les calculs complexes
+        - Système de cache intelligent pour les explications récurrentes
+        - Métriques de qualité et de fidélité des explications
+        - Génération de narratives explicatives multi-audience et multilingues
+        - Validation de conformité réglementaire intégrée
+        
+        Args:
+            instance: Instance à expliquer (array, liste, dict ou pandas.Series)
+            **kwargs: Paramètres additionnels
+                - num_features: Nombre de caractéristiques à inclure dans l'explication
+                - num_samples: Nombre d'échantillons à générer pour l'approximation locale
+                - audience_level: Niveau d'audience (TECHNICAL, BUSINESS, PUBLIC)
+                - label: Indice de la classe à expliquer (pour les classifieurs multi-classes)
+                - use_cache: Activer/désactiver l'utilisation du cache (défaut: True)
+                - use_gpu: Utiliser GPU si disponible (défaut: configuration globale)
+                - compute_metrics: Calculer les métriques de qualité d'explication (défaut: True)
+                - include_prediction: Inclure la prédiction du modèle dans le résultat (défaut: True)
+                - generate_narrative: Générer des narratives textuelles explicatives (défaut: True)
+                - narrative_language: Langue des narratives ('fr', 'en') (défaut: 'fr')
+                - check_compliance: Vérifier la conformité réglementaire de l'explication (défaut: True)
+                - compliance_regulations: Liste des réglementations à vérifier (défaut: ['gdpr', 'ai_act'])
+                
+        Returns:
+            ExplanationResult: Résultat standardisé de l'explication avec métriques avancées, narratives et conformité
+        """
+        import hashlib
+        import pickle
+        import time
+        import sys
+        from dataclasses import dataclass, field
+        from contextlib import nullcontext
+        from datetime import datetime
+        
+        # Import des modules internes pour mesurer la performance
+        try:
+            from ..core.profiling import Timer, MemoryTracker
+        except ImportError:
+            # Fallback simple si les modules ne sont pas disponibles
+            class Timer:
+                def __init__(self, name="Timer"):
+                    self.name = name
+                    self.start_time = None
+                def __enter__(self):
+                    self.start_time = time.time()
+                    return self
+                def __exit__(self, *args):
+                    self.elapsed = time.time() - self.start_time
             
-    Returns:
-        ExplanationResult: Résultat standardisé de l'explication avec métriques avancées, narratives et conformité
-    """
-    import hashlib
-    import pickle
-    import time
-    import sys
-    from dataclasses import dataclass, field
-    from contextlib import nullcontext
-    from datetime import datetime
-    
-    # Import des modules internes pour mesurer la performance
-    try:
-        from ..core.profiling import Timer, MemoryTracker
-    except ImportError:
-        # Fallback simple si les modules ne sont pas disponibles
-        class Timer:
-            def __init__(self, name="Timer"):
-                self.name = name
-                self.start_time = None
-            def __enter__(self):
-                self.start_time = time.time()
-                return self
-            def __exit__(self, *args):
-                self.elapsed = time.time() - self.start_time
+            class MemoryTracker:
+                def __init__(self, name="MemoryTracker"):
+                    self.name = name
+                    self.start_mem = None
+                def __enter__(self):
+                    self.start_mem = sys.getsizeof({})
+                    return self
+                def __exit__(self, *args):
+                    self.usage = 0  # Placeholder
         
-        class MemoryTracker:
-            def __init__(self, name="MemoryTracker"):
-                self.name = name
-                self.start_mem = None
-            def __enter__(self):
-                self.start_mem = sys.getsizeof({})
-                return self
-            def __exit__(self, *args):
-                self.usage = 0  # Placeholder
-    
-    # Import du vérificateur de conformité s'il est disponible
-    try:
-        from ..compliance.compliance_checker import ComplianceChecker
-        has_compliance_checker = True
-    except ImportError:
-        has_compliance_checker = False
-    
-    # Configuration et paramètres avancés
-    @dataclass
-    class ExplainConfig:
-        # Paramètres basiques de LIME
-        num_features: int = 10
-        num_samples: int = 5000
-        audience_level: AudienceLevel = AudienceLevel.TECHNICAL
-        label: Optional[int] = None
-        feature_names: List[str] = field(default_factory=list)
+        # Import du vérificateur de conformité s'il est disponible
+        try:
+            from ..compliance.compliance_checker import ComplianceChecker
+            has_compliance_checker = True
+        except ImportError:
+            has_compliance_checker = False
         
-        # Paramètres avancés
-        use_cache: bool = True
-        use_gpu: bool = True  # Utiliser GPU si disponible
-        compute_metrics: bool = True  # Calculer les métriques de qualité
-        include_prediction: bool = True  # Inclure la prédiction dans le résultat
-        generate_narrative: bool = True  # Générer des narratives explicatives
-        narrative_language: str = 'fr'  # Langue des narratives
-        check_compliance: bool = True  # Vérifier la conformité réglementaire
-        compliance_regulations: List[str] = field(default_factory=lambda: ['gdpr', 'ai_act'])
-    
-    # Créer et remplir la configuration
-    config = ExplainConfig(
-        num_features=kwargs.get('num_features', 10),
-        num_samples=kwargs.get('num_samples', 5000),
-        audience_level=kwargs.get('audience_level', AudienceLevel.TECHNICAL),
-        label=kwargs.get('label', None),
-        use_cache=kwargs.get('use_cache', True),
-        use_gpu=kwargs.get('use_gpu', getattr(self, '_config', {}).get('use_gpu', True)),
-        compute_metrics=kwargs.get('compute_metrics', True),
-        include_prediction=kwargs.get('include_prediction', True),
-        generate_narrative=kwargs.get('generate_narrative', True),
-        narrative_language=kwargs.get('narrative_language', 'fr'),
-        check_compliance=kwargs.get('check_compliance', True),
-        compliance_regulations=kwargs.get('compliance_regulations', ['gdpr', 'ai_act'])
-    )
-    
-    # Initialiser trackers de performance
-    timer = Timer("LimeExplanation")
-    memory_tracker = MemoryTracker("LimeMemory")
-    
-    with timer, memory_tracker:        
-        # Convertir l'instance en format approprié
-        if isinstance(instance, dict):
-            # Convertir dict en array
-            feature_names = list(instance.keys())
-            instance_array = np.array([instance[f] for f in feature_names]).reshape(1, -1)
-        elif isinstance(instance, pd.Series):
-            feature_names = instance.index.tolist()
-            instance_array = instance.values.reshape(1, -1)
-        elif isinstance(instance, (list, np.ndarray)):
-            instance_array = np.array(instance).reshape(1, -1)
-            feature_names = kwargs.get('feature_names', self._feature_names) or \
-                        [f"feature_{i}" for i in range(instance_array.shape[1])]
-        else:
-            raise ValueError("Format d'instance non supporté. Utilisez un dict, pandas.Series, liste ou numpy.ndarray.")
+        # Configuration et paramètres avancés
+        @dataclass
+        class ExplainConfig:
+            # Paramètres basiques de LIME
+            num_features: int = 10
+            num_samples: int = 5000
+            audience_level: AudienceLevel = AudienceLevel.TECHNICAL
+            label: Optional[int] = None
+            feature_names: List[str] = field(default_factory=list)
+            
+            # Paramètres avancés
+            use_cache: bool = True
+            use_gpu: bool = True  # Utiliser GPU si disponible
+            compute_metrics: bool = True  # Calculer les métriques de qualité
+            include_prediction: bool = True  # Inclure la prédiction dans le résultat
+            generate_narrative: bool = True  # Générer des narratives explicatives
+            narrative_language: str = 'fr'  # Langue des narratives
+            check_compliance: bool = True  # Vérifier la conformité réglementaire
+            compliance_regulations: List[str] = field(default_factory=lambda: ['gdpr', 'ai_act'])
+        
+        # Créer et remplir la configuration
+        config = ExplainConfig(
+            num_features=kwargs.get('num_features', 10),
+            num_samples=kwargs.get('num_samples', 5000),
+            audience_level=kwargs.get('audience_level', AudienceLevel.TECHNICAL),
+            label=kwargs.get('label', None),
+            use_cache=kwargs.get('use_cache', True),
+            use_gpu=kwargs.get('use_gpu', getattr(self, '_config', {}).get('use_gpu', True)),
+            compute_metrics=kwargs.get('compute_metrics', True),
+            include_prediction=kwargs.get('include_prediction', True),
+            generate_narrative=kwargs.get('generate_narrative', True),
+            narrative_language=kwargs.get('narrative_language', 'fr'),
+            check_compliance=kwargs.get('check_compliance', True),
+            compliance_regulations=kwargs.get('compliance_regulations', ['gdpr', 'ai_act'])
+        )
+        
+        # Initialiser trackers de performance
+        timer = Timer("LimeExplanation")
+        memory_tracker = MemoryTracker("LimeMemory")
+        
+        with timer, memory_tracker:        
+            # Convertir l'instance en format approprié
+            if isinstance(instance, dict):
+                # Convertir dict en array
+                feature_names = list(instance.keys())
+                instance_array = np.array([instance[f] for f in feature_names]).reshape(1, -1)
+            elif isinstance(instance, pd.Series):
+                feature_names = instance.index.tolist()
+                instance_array = instance.values.reshape(1, -1)
+            elif isinstance(instance, (list, np.ndarray)):
+                instance_array = np.array(instance).reshape(1, -1)
+                feature_names = kwargs.get('feature_names', self._feature_names) or \
+                            [f"feature_{i}" for i in range(instance_array.shape[1])]
+            else:
+                raise ValueError("Format d'instance non supporté. Utilisez un dict, pandas.Series, liste ou numpy.ndarray.")
         
         config.feature_names = feature_names
         
