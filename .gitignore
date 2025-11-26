@@ -150,3 +150,7 @@ outputs/
 test_outputs/
 *.html
 *.pdf
+
+# PyPI credentials (NEVER commit these!)
+.pypirc
+*.pypirc
