@@ -99,8 +99,12 @@ Repository = "https://github.com/nicolasseverino/xplia"
 "Bug Tracker" = "https://github.com/nicolasseverino/xplia/issues"
 Changelog = "https://github.com/nicolasseverino/xplia/blob/main/CHANGELOG.md"
 
-[tool.setuptools]
-packages = ["xplia"]
+[project.scripts]
+xplia = "xplia.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["tests*", "examples*", "docs*", "benchmarks*", "notebooks*"]
 
 [tool.setuptools.package-data]
 xplia = ["py.typed"]
