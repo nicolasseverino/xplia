@@ -7,7 +7,7 @@ setup(
     name="xplia",
     version="1.0.1",  # Bug fixes and improvements
     author="Nicolas Severino",
-    author_email="nicolas.severino@example.com",
+    author_email="nicolasseverino@outlook.com",
     description="XPLIA: The Ultimate State-of-the-Art AI Explainability Library",
     long_description=long_description,
     long_description_content_type="text/markdown",
